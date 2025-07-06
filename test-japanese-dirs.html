@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Japanese Directory Names</title>
+</head>
+<body>
+    <h1>Test Japanese Directory Names with File System Access API</h1>
+    <button id="testBtn">Select Folder and Test</button>
+    <pre id="output"></pre>
+    
+    <script>
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            const output = document.getElementById('output');
+            
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                output.textContent = 'Selected directory: ' + dirHandle.name + '\n\n';
+                
+                for await (const [name, handle] of dirHandle.entries()) {
+                    output.textContent += `Entry: ${name} (${handle.kind})\n`;
+                    output.textContent += `  Encoded: ${encodeURIComponent(name)}\n`;
+                    output.textContent += `  Char codes: ${Array.from(name).map(c => c.charCodeAt(0)).join(', ')}\n`;
+                    
+                    if (handle.kind === 'directory') {
+                        try {
+                            let fileCount = 0;
+                            for await (const [fileName, fileHandle] of handle.entries()) {
+                                if (fileName.endsWith('.properties')) {
+                                    fileCount++;
+                                }
+                            }
+                            output.textContent += `  Properties files: ${fileCount}\n`;
+                        } catch (e) {
+                            output.textContent += `  Error reading directory: ${e.message}\n`;
+                        }
+                    }
+                    output.textContent += '\n';
+                }
+            } catch (e) {
+                output.textContent = 'Error: ' + e.message;
+            }
+        });
+    </script>
+</body>
+</html>
